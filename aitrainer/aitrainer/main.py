@@ -1,3 +1,4 @@
+import json, requests
 from datetime import datetime,timedelta
 
 from flask import Flask, render_template, session, request, redirect, flash
@@ -12,16 +13,15 @@ app.secret_key = "0x29874909298974790097629842"
 app.permanent_session_lifetime = timedelta(minutes=30)
 
 db = SQLAlchemy(app) 
-
 bootstrap = Bootstrap(app)
 
 @app.route("/", methods=["GET"])
-def index():
+def list():
     if "flag" in session and session["flag"]:
-        msg = "hello,  "+ str(session["uid"])
+        msg = str(session["uid"]) + "'s records"
         data = Record.query.filter_by(uid=session["uid"]).all()
         return render_template("list.html",
-                               title="A page for after signing in.",
+                               title="Records",
                                message=msg,
                                data=data)
     else:
@@ -117,10 +117,29 @@ def admin():
                                title="A admin page",
                                message_id="User ID is wrong")
     
-        
-        
-    
+@app.route("/run-camera", methods=["POST"])
+def run_camera():
+    # response = requests.get('http://<jetson-ip>:<port>/run-code')
+    # if response.ok:
+    if True:
+        flash("Running", "alert-success")
+    else:
+        flash("Error", "alert-danger")
+    return redirect("/")
 
+@app.route("/fetch-data", methods=["POST"])
+def fetch_data():
+    try:
+        json_data = json.loads(request.data, strict=False)
+        return "JSON data loaded successfully"
+    except ValueError as e:
+        return "Invalid JSON: {}".format(str(e))
+    except requests.exceptions.HTTPError as e:
+        return "HTTP error: {}".format(str(e))
+    
+    #---- requires more error handlings and redirecting settings to the codes above
+    
+    
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -139,5 +158,5 @@ class Record(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=3333)
+    app.run(debug=True, port=3030)
 
